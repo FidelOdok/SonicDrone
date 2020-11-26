@@ -313,11 +313,11 @@
             // 
             this.textBox11.BackColor = System.Drawing.SystemColors.Control;
             this.textBox11.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.textBox11.Font = new System.Drawing.Font("Nasalization", 21.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBox11.Font = new System.Drawing.Font("Microsoft Sans Serif", 21.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.textBox11.Location = new System.Drawing.Point(85, 10);
             this.textBox11.Name = "textBox11";
             this.textBox11.ReadOnly = true;
-            this.textBox11.Size = new System.Drawing.Size(418, 27);
+            this.textBox11.Size = new System.Drawing.Size(418, 33);
             this.textBox11.TabIndex = 0;
             this.textBox11.Text = "YMFC-32 flight monitor";
             this.textBox11.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
@@ -340,7 +340,7 @@
             this.label13.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label13.Location = new System.Drawing.Point(7, 154);
             this.label13.Name = "label13";
-            this.label13.Size = new System.Drawing.Size(100, 21);
+            this.label13.Size = new System.Drawing.Size(99, 21);
             this.label13.TabIndex = 39;
             this.label13.Text = "LOS distance";
             // 
@@ -435,7 +435,7 @@
             // 
             this.pictureBox3.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox3.Image")));
             this.pictureBox3.InitialImage = ((System.Drawing.Image)(resources.GetObject("pictureBox3.InitialImage")));
-            this.pictureBox3.Location = new System.Drawing.Point(9, 14);
+            this.pictureBox3.Location = new System.Drawing.Point(8, 14);
             this.pictureBox3.Name = "pictureBox3";
             this.pictureBox3.Size = new System.Drawing.Size(40, 40);
             this.pictureBox3.TabIndex = 53;
@@ -636,7 +636,7 @@
             this.label38.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label38.Location = new System.Drawing.Point(8, 178);
             this.label38.Name = "label38";
-            this.label38.Size = new System.Drawing.Size(99, 21);
+            this.label38.Size = new System.Drawing.Size(97, 21);
             this.label38.TabIndex = 50;
             this.label38.Text = "Temperature";
             // 

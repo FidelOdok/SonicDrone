@@ -85,7 +85,7 @@ namespace Test_1
                 {
                     port = new SerialPort(PortNumber.Text, 9600, Parity.None, 8, StopBits.One);
                     port.DataReceived += new SerialDataReceivedEventHandler(DataReceivedHandler);
-
+                    
                     port.Open();
                     OpenClose.Text = "Close";
                     Location_update_timer.Enabled = true;

@@ -1,0 +1,46 @@
+﻿<Window x:Class="DroneMonitor.Shell"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DroneMonitor"
+        WindowState="Maximized"
+        WindowStyle="ThreeDBorderWindow"
+        ShowInTaskbar="True"
+        WindowStartupLocation="CenterScreen"
+        xmlns:prism="http://prismlibrary.com/"
+        mc:Ignorable="d"
+        Title="Flight Monitor" Height="450" Width="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Ribbon Grid.Row="0" Background="LightGoldenrodYellow" Cursor="Hand">
+            <Ribbon.ApplicationMenu>
+                <RibbonApplicationMenu Visibility="Hidden"/>
+            </Ribbon.ApplicationMenu>
+            
+            <RibbonTab Header="Visualization" Background="#FFC57777">
+                <RibbonGroup Header="Control">
+                    <ContentControl prism:RegionManager.RegionName="ControlRegion"/>
+                </RibbonGroup>
+            </RibbonTab>
+            <RibbonTab Header="Flight Vision" Background="#FFC57777">
+                <RibbonGroup Header="Design Parameters">
+                    <ContentControl prism:RegionManager.RegionName="VisionRegion"/>
+                </RibbonGroup>
+            </RibbonTab>
+        </Ribbon>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="0.2*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <ContentControl Grid.Column="0" prism:RegionManager.RegionName="PictureRegion"/>
+            <GridSplitter Width="3" Background="LightGoldenrodYellow"/>
+            <ContentControl Grid.Column="1" prism:RegionManager.RegionName="ContentRegion"
+                            Margin="5"/>
+        </Grid>
+    </Grid>
+</Window>
