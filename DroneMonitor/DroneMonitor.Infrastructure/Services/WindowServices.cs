@@ -85,12 +85,22 @@ namespace DroneMonitor.Infrastructure.Services {
            return dialog.FileName;
         }
 
+        public bool? DisplayAlert(string title, string message, bool yesNo = false) {
+            MessageBoxResult result;
+            if (yesNo) {
+                result = MessageBox.Show(message, title,MessageBoxButton.YesNo);
+            }
+            else {
+                result = MessageBox.Show(message, title);
+            }
+            return MessageBoxResult.Yes == result ? true : false;
+        }
+
         private IRegionManager RegionManager => ServiceLocator.Current.GetInstance<IRegionManager>();
 
         private IEventAggregator EventAggregator => ServiceLocator.Current.GetInstance<IEventAggregator>();
 
         private ContentControl _activeWindow;
         private Window _activeDialog;
-
     }
 }

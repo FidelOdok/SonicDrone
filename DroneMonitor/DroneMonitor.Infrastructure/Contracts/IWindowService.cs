@@ -12,6 +12,8 @@ namespace DroneMonitor.Infrastructure.Contracts {
 
         void CloseDialog();
 
+        bool? DisplayAlert(string title, string messsage, bool yesNo = false);
+
         ContentControl GetActiveWindow();
     }
 }

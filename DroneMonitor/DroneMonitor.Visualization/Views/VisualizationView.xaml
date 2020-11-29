@@ -3,9 +3,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:converter="clr-namespace:DroneMonitor.Visualization.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
+        <converter:BoolToBrushConverter x:Key="boolToBrushConverter"/>
+        <converter:IntToBrushConverter x:Key="intToBrushConverter"/>
+        <BooleanToVisibilityConverter x:Key="boolToVisibilityConverter"/>
+
         <Style TargetType="Button">
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -19,27 +24,64 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+
+        <Style TargetType="TextBlock" x:Key="WayPointStyle">
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Padding" Value="10,0,10,0"/>
+            <Setter Property="Background" Value="LightGoldenrodYellow"/>
+            <Setter Property="Foreground" Value="Red"/>
+        </Style>
     </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>
         <StackPanel Orientation="Horizontal"
-                    HorizontalAlignment="Right">
-            <TextBlock Text="Flight Time: 00:00:00" FontSize="16"/>
+                    HorizontalAlignment="Center">
+            <TextBlock Text="W" Visibility="{Binding WayPointVisibility, Converter={StaticResource boolToVisibilityConverter}}"
+                       Style="{StaticResource WayPointStyle}"/>
+            <TextBlock Text="1" Visibility="{Binding WayPointVisibility, Converter={StaticResource boolToVisibilityConverter}}"
+                       Style="{StaticResource WayPointStyle}"/>
+            <TextBlock Text="2" Visibility="{Binding WayPointVisibility, Converter={StaticResource boolToVisibilityConverter}}"
+                       Style="{StaticResource WayPointStyle}"/>
+            <TextBlock Text="3" Visibility="{Binding WayPointVisibility, Converter={StaticResource boolToVisibilityConverter}}"
+                       Style="{StaticResource WayPointStyle}"/>
+            <TextBlock Text="4" Visibility="{Binding WayPointVisibility, Converter={StaticResource boolToVisibilityConverter}}"
+                       Style="{StaticResource WayPointStyle}"/>
+            <TextBlock Text="5" Visibility="{Binding WayPointVisibility, Converter={StaticResource boolToVisibilityConverter}}"
+                       Style="{StaticResource WayPointStyle}"/>
+            <TextBlock Text="6" Visibility="{Binding WayPointVisibility, Converter={StaticResource boolToVisibilityConverter}}"
+                       Style="{StaticResource WayPointStyle}"/>
+            <TextBlock Text="7" Visibility="{Binding WayPointVisibility, Converter={StaticResource boolToVisibilityConverter}}"
+                       Style="{StaticResource WayPointStyle}"/>
+
+            <TextBlock Text="Flight Mode: " FontSize="16" Margin="20,0,0,0"/>
+            <TextBlock Text="{Binding FlightMode}" FontSize="16"/>
+            <TextBlock Text="Error: " FontSize="16" Margin="20,0,0,0"/>
+            <TextBlock Text="{Binding Error}" FontSize="16"/>
+            
+            <Rectangle Width="155" Fill="{Binding BatteryColor,Converter={StaticResource intToBrushConverter}}" 
+                       Height="16" Margin="20,0,0,0"/>
+
+            <TextBlock Text="Waiting for telemetry signal" 
+                       FontSize="16" Margin="50,0,0,0"
+                       Foreground="Red"
+                       Visibility="{Binding SignalMessageVisibility,
+                            Converter={StaticResource boolToVisibilityConverter}}"/>
+            <TextBlock Text="{Binding FlightTimer}" FontSize="16"
+                       Margin="50,0,0,0"/>
         </StackPanel>
+        
         <WebBrowser Grid.Row="1" Name="browser"/>
-        <Rectangle Height="50" HorizontalAlignment="Stretch"
-                   VerticalAlignment="Bottom" 
-                   Fill="LightGoldenrodYellow"
-                   Stroke="LightGoldenrodYellow"
-                   Grid.Row="1"/>
-        <GridSplitter Grid.Row="1" Height="50"
+
+        <GridSplitter Grid.Row="2" Height="15"
                       Background="LightGoldenrodYellow" 
-                      VerticalAlignment="Bottom"
+                      VerticalAlignment="Top"
                       HorizontalAlignment="Stretch"/>
+       
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
@@ -51,11 +93,16 @@
                 <StackPanel HorizontalAlignment="Stretch" Margin="0,20,0,0">
                     <TextBlock Text="Ports"/>
                     <ComboBox VerticalAlignment="Center"
+                              SelectedItem="{Binding SelectedPort,Mode=TwoWay,
+                                UpdateSourceTrigger=PropertyChanged}"
                               ItemsSource="{Binding Ports}"
                               HorizontalAlignment="Stretch"/>
-                    <Button Content="Start/Stop" VerticalAlignment="Center"
+                    <Button Content="{Binding StartStop}" VerticalAlignment="Center"
                             HorizontalAlignment="Center"
-                            Margin="0,20,0,0"/>
+                            Command="{Binding OpenCloseCommand}"
+                            Margin="0,20,0,0"
+                            Background="{Binding IsOpen,
+                                Converter={StaticResource boolToBrushConverter}}"/>
                 </StackPanel>
             </GroupBox>
             <GroupBox Grid.Column="1" Header="Way Points">
@@ -80,7 +127,8 @@
                         <Button Content="Reset" Margin="5" Grid.Column="0"
                                 VerticalAlignment="Center"/>
                         <Button Content="Create List" Margin="5" Grid.Column="1"
-                                VerticalAlignment="Center"/>
+                                VerticalAlignment="Center"
+                                Command="{Binding CreateListCommand}"/>
                         <Button Content="Fly List" Margin="5"  Grid.Column="2"
                                 VerticalAlignment="Center"/>
                     </Grid>
@@ -100,6 +148,7 @@
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <TextBlock Text="Latitude       -     " Grid.Column="0" Grid.Row="0"/>
                     <TextBlock Text="Longitude      -     " Grid.Column="0" Grid.Row="1"/>
@@ -108,14 +157,16 @@
                     <TextBlock Text="Max Altitude   -     " Grid.Column="0" Grid.Row="4"/>
                     <TextBlock Text="LOS distance   -     " Grid.Column="0" Grid.Row="5"/>
                     <TextBlock Text="Temperature    -     " Grid.Column="0" Grid.Row="6"/>
+                    <TextBlock Text="Battery Life   -     " Grid.Column="0" Grid.Row="7"/>
 
-                    <TextBlock Grid.Column="1" Grid.Row="0"/>
-                    <TextBlock Grid.Column="1" Grid.Row="1"/>
-                    <TextBlock Grid.Column="1" Grid.Row="2"/>
-                    <TextBlock Grid.Column="1" Grid.Row="3"/>
-                    <TextBlock Grid.Column="1" Grid.Row="4"/>
-                    <TextBlock Grid.Column="1" Grid.Row="5"/>
-                    <TextBlock Grid.Column="1" Grid.Row="6"/>
+                    <TextBlock Text="{Binding Latitude}" Grid.Column="1" Grid.Row="0"/>
+                    <TextBlock Text="{Binding Longitude}" Grid.Column="1" Grid.Row="1"/>
+                    <TextBlock Text="{Binding Heading}" Grid.Column="1" Grid.Row="2"/>
+                    <TextBlock Text="{Binding Altitude}" Grid.Column="1" Grid.Row="3"/>
+                    <TextBlock Text="{Binding MaxAltitude}" Grid.Column="1" Grid.Row="4"/>
+                    <TextBlock Text="{Binding LOSDistance}" Grid.Column="1" Grid.Row="5"/>
+                    <TextBlock Text="{Binding Temperature}" Grid.Column="1" Grid.Row="6"/>
+                    <TextBlock Text="{Binding Battery}" Grid.Column="1" Grid.Row="7"/>
                 </Grid>
             </GroupBox>
             <GroupBox Grid.Column="3" Header="Altitude Data">
@@ -128,11 +179,11 @@
                         <RowDefinition Height="auto"/>
                         <RowDefinition Height="auto"/>
                     </Grid.RowDefinitions>
-                    <TextBlock Text="Latitude       -     " Grid.Column="0" Grid.Row="0"/>
-                    <TextBlock Text="Longitude      -     " Grid.Column="0" Grid.Row="1"/>
+                    <TextBlock Text="Pitch Angle     -     " Grid.Column="0" Grid.Row="0"/>
+                    <TextBlock Text="Roll Angle      -     " Grid.Column="0" Grid.Row="1"/>
 
-                    <TextBlock Grid.Column="1" Grid.Row="0"/>
-                    <TextBlock Grid.Column="1" Grid.Row="1"/>
+                    <TextBlock Text="{Binding PitchAngle}" Grid.Column="1" Grid.Row="0"/>
+                    <TextBlock Text="{Binding RollAngle}" Grid.Column="1" Grid.Row="1"/>
                 </Grid>
             </GroupBox>
         </Grid>

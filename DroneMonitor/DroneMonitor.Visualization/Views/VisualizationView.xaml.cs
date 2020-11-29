@@ -9,7 +9,7 @@ namespace DroneMonitor.Visualization.Views {
         public VisualizationView() {
             InitializeComponent();
             DataContext = new VisualizationViewModel();
-            browser.Navigate("https://google.com");
+            browser.Navigate("https://www.google.ng/maps");
         }
     }
 }
