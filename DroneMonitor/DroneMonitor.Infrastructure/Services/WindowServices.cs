@@ -41,7 +41,6 @@ namespace DroneMonitor.Infrastructure.Services {
             var window = RegionManager.Regions[ContentRegion].GetView(viewName);
             if (window == null) {
                 window = Activator.CreateInstance(typeof(T));
-                //ClearRegion();
                 RegionManager.Regions[ContentRegion].Add(window, viewName)
                              .Regions[ContentRegion].Activate(window);
             }
@@ -76,11 +75,12 @@ namespace DroneMonitor.Infrastructure.Services {
         }
 
         public string LaunchFileDialog() {
-            var dialog = new OpenFileDialog();
-            dialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-            dialog.Filter = "Excel files (*.xlsx*)|*.xlsx*|Text files (*.txt*)|*.txt*|All files (*.*)|*.*";
-            // "Image files (*.bmp, *.jpg)|*.bmp;*.jpg|All files (*.*)|*.*"'
-            dialog.Title = "Select input data stored in text file";
+            var dialog = new OpenFileDialog {
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+                Filter = "Excel files (*.xlsx*)|*.xlsx*|Text files (*.txt*)|*.txt*|All files (*.*)|*.*",
+                // "Image files (*.bmp, *.jpg)|*.bmp;*.jpg|All files (*.*)|*.*"'
+                Title = "Select input data stored in text file"
+            };
             dialog.ShowDialog(Application.Current.MainWindow);
            return dialog.FileName;
         }

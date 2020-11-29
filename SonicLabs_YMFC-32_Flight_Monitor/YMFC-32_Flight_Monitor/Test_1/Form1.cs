@@ -34,6 +34,7 @@ namespace Test_1
     public partial class Scherm_1 : Form
     {
         static SerialPort port;
+        
         public Scherm_1()
         {
             InitializeComponent();
@@ -168,7 +169,8 @@ namespace Test_1
             {
                 label27.Visible = true;
             }
-            else label27.Visible = false;
+            else
+                label27.Visible = false;
             
             milliseconds += 100;
             if (first_receive == 1)
