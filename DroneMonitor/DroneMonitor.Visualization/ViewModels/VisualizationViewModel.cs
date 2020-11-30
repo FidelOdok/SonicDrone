@@ -1,6 +1,7 @@
 ﻿using DroneMonitor.Infrastructure.Base;
 using Prism.Commands;
 using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO.Ports;
 using System.Timers;
@@ -21,6 +22,9 @@ namespace DroneMonitor.Visualization.ViewModels {
             fly_waypoint_list.Elapsed += Fly_waypoint_list_Tick;
             Send_telemetry_data = new Timer(200);
             Send_telemetry_data.Elapsed += Send_telemetry_data_Tick;
+            _alwaysRunningTimer.Start();
+            fly_waypoint_list.Start();
+            Send_telemetry_data.Start();
         }
 
         private void FlyListAction() {
@@ -120,6 +124,9 @@ namespace DroneMonitor.Visualization.ViewModels {
                 ground_distance += Math.Pow((float)(l_lon_gps - home_lon_gps) * (Math.Cos((l_lat_gps / 1000000) * 0.017453) * 0.111), 2);
                 ground_distance = Math.Sqrt(ground_distance);
                 los_distance = Math.Sqrt(Math.Pow(ground_distance, 2) + Math.Pow(altitude_meters, 2));
+
+                
+                
             }
         }
 
