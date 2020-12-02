@@ -1,6 +1,9 @@
 ﻿using DroneMonitor.Infrastructure.Base;
+using GMap.NET;
+using GMap.NET.MapProviders;
 using Prism.Commands;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO.Ports;
 using System.Timers;
@@ -9,6 +12,8 @@ namespace DroneMonitor.Visualization.ViewModels {
     public class VisualizationViewModel : ViewModelBase {
         public VisualizationViewModel() {
             Ports = SerialPort.GetPortNames();
+            Maps = GMapProviders.List;
+            SelectedMap = GMapProviders.GoogleMap;
             OpenCloseCommand = new DelegateCommand(OpenCloseAction);
             ResetCommand = new DelegateCommand(ResetAction);
             FlyListCommand = new DelegateCommand(FlyListAction);
@@ -348,13 +353,19 @@ namespace DroneMonitor.Visualization.ViewModels {
         private string _latitude;
         public string Latitude {
             get => _latitude;
-            set => SetProperty(ref _latitude, value);
+            set {
+                SetProperty(ref _latitude, value);
+                RaisePropertyChanged(nameof(Position));
+            }
         }
 
         private string _longitude;
         public string Longitude {
             get => _longitude;
-            set => SetProperty(ref _longitude, value);
+            set {
+                SetProperty(ref _longitude, value);
+                RaisePropertyChanged(nameof(Position));
+            }
         }
 
         private string _altitude;
@@ -434,11 +445,30 @@ namespace DroneMonitor.Visualization.ViewModels {
             set => SetProperty(ref battery_bar_level, value);
         }
 
+        private GMapProvider _selectedMap;
+        public GMapProvider SelectedMap {
+            get => _selectedMap;
+            set => SetProperty(ref _selectedMap, value);
+        }
+
+        private PointLatLng _position;
+        public PointLatLng Position {
+            get {
+                if(Latitude is null || Longitude is null)
+                    return new PointLatLng(7.06130,4.82241);
+                return new PointLatLng(double.Parse(Latitude), double.Parse(Longitude));
+            }
+
+            set => SetProperty(ref _position, value);
+        }
+
         public DelegateCommand OpenCloseCommand { get; }
         public DelegateCommand CreateListCommand { get; }
         public DelegateCommand FlyListCommand { get; }
         public DelegateCommand ResetCommand { get; }
         public string[] Ports { get; set; }
+        public List<GMapProvider> Maps { get; }
+
 
         private SerialPort _serialPort;
         private byte check_byte;

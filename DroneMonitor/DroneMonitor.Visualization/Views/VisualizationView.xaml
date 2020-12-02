@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:converter="clr-namespace:DroneMonitor.Visualization.Converters"
+             xmlns:map="clr-namespace:GMap.NET.WindowsPresentation;assembly=GMap.NET.WindowsPresentation"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
@@ -74,9 +75,26 @@
             <TextBlock Text="{Binding FlightTimer}" FontSize="16"
                        Margin="50,0,0,0"/>
         </StackPanel>
-        
-        <WebBrowser Grid.Row="1" Name="browser"/>
 
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="0.15*"/>
+            </Grid.ColumnDefinitions>
+            <map:GMapControl  Name="map" Grid.Column="0" MapProvider="{Binding SelectedMap}"
+                              Position="{Binding Position,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                              MinZoom="1" MaxZoom="24" Zoom="{Binding ElementName=zoomSlider, Path=Value}"/>
+            <StackPanel Grid.Column="1" Margin="5,0,0,0">
+                <TextBlock Text="Zoom"/>
+                <Slider Minimum="1" Maximum="23" 
+                        Name="zoomSlider" Value="13"/>
+
+                <TextBlock Text="Maps"/>
+                <ComboBox ItemsSource="{Binding Maps}" 
+                          SelectedItem="{Binding SelectedMap,UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+        </Grid>
+        
         <GridSplitter Grid.Row="2" Height="15"
                       Background="LightGoldenrodYellow" 
                       VerticalAlignment="Top"
