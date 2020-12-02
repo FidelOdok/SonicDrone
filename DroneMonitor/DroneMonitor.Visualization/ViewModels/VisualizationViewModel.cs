@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO.Ports;
 using System.Timers;
+using System.Windows.Media;
 
 namespace DroneMonitor.Visualization.ViewModels {
     public class VisualizationViewModel : ViewModelBase {
@@ -152,6 +153,16 @@ namespace DroneMonitor.Visualization.ViewModels {
                 if (flight_mode == 8) FlightMode = "8-RTH finished";
                 if (flight_mode == 9) FlightMode = "9-Fly to waypoint";
 
+                if (start == 0) {
+                    BladeColor = Brushes.Blue;
+                }
+                if (start == 1) {
+                    BladeColor = Brushes.Yellow;
+                }
+                if (start == 2) {
+                    BladeColor = Brushes.Red;
+                }
+
 
                 if (error == 0) Error = "No error";
                 if (error == 1) Error = "Battery LOW";
@@ -162,7 +173,19 @@ namespace DroneMonitor.Visualization.ViewModels {
                 if (error == 6) Error = "No take-off detected";
                 if (error == 7) Error = "Auto throttle error";
 
-                //label15.Text = number_used_sats.ToString();
+                SatUsed = number_used_sats.ToString();
+                if (number_used_sats > 6) {
+                    SatColor = Brushes.Green;
+
+                }
+                else if (number_used_sats > 3) {
+                    SatColor = Brushes.Yellow;
+
+                }
+                else {
+                    SatColor = Brushes.Red;
+
+                }
 
                 Latitude = ((float)l_lat_gps / 1000000.0).ToString(new CultureInfo("en-US"));
                 Longitude = ((float)l_lon_gps / 1000000.0).ToString(new CultureInfo("en-US"));
@@ -342,6 +365,24 @@ namespace DroneMonitor.Visualization.ViewModels {
         public string FlightMode {
             get => _fligtMode;
             set => SetProperty(ref _fligtMode, value);
+        }
+
+        private string _satUsed;
+        public string SatUsed {
+            get => _satUsed;
+            set => SetProperty(ref _satUsed, value);
+        }
+
+        private Brush _satColor=Brushes.Red;
+        public Brush SatColor {
+            get => _satColor;
+            set => SetProperty(ref _satColor, value);
+        }
+
+        private Brush _bladeColor = Brushes.Red;
+        public Brush BladeColor {
+            get => _bladeColor;
+            set => SetProperty(ref _bladeColor, value);
         }
 
         private string _error;
