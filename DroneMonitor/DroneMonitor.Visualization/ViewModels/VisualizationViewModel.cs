@@ -1,18 +1,24 @@
 ﻿using DroneMonitor.Infrastructure.Base;
+using DroneMonitor.Visualization.Markers;
 using GMap.NET;
 using GMap.NET.MapProviders;
+using GMap.NET.WindowsPresentation;
 using Prism.Commands;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO.Ports;
+using System.Linq;
 using System.Timers;
+using System.Windows;
+using System.Windows.Input;
 using System.Windows.Media;
 
 namespace DroneMonitor.Visualization.ViewModels {
     public class VisualizationViewModel : ViewModelBase {
         public VisualizationViewModel() {
             Ports = SerialPort.GetPortNames();
+            _serialPort = new SerialPort();
             Maps = GMapProviders.List;
             SelectedMap = GMapProviders.GoogleMap;
             OpenCloseCommand = new DelegateCommand(OpenCloseAction);
@@ -27,6 +33,78 @@ namespace DroneMonitor.Visualization.ViewModels {
             fly_waypoint_list.Elapsed += Fly_waypoint_list_Tick;
             Send_telemetry_data = new Timer(200);
             Send_telemetry_data.Elapsed += Send_telemetry_data_Tick;
+            _flight_timer = new Timer(200);
+            _flight_timer.Elapsed += FlightTimerTick;
+            _alwaysRunningTimer.Start();
+            fly_waypoint_list.Start();
+            Send_telemetry_data.Start();
+        }
+
+        public void MapClicked(GMapControl sender, MouseButtonEventArgs e) {
+            _map = sender;
+            var point = e.GetPosition(sender);
+            if (_serialPort.IsOpen && first_receive == 1 && start == 2 && flight_mode == 3 && fly_waypoint_list.Enabled == false) {
+                var latLong = sender.FromLocalToLatLng((int)point.X, (int)point.Y);
+
+                if (create_waypoint_list && waypoint_list_counter < 8) {
+                    var marker = new GMapMarker(latLong) {
+                        Offset = new Point(-15, -15),
+                        ZIndex = int.MaxValue,
+                    };
+                    marker.Shape = new GreenMarker(marker, (waypoint_list_counter + 1).ToString());
+                    sender.Markers.Add(marker);
+
+                }
+                else {
+
+                    if (_marker != null)
+                        sender.Markers.Remove(_marker);
+
+                    _marker = new GMapMarker(latLong) {
+                        Offset = new Point(-15, -15),
+                        ZIndex = int.MaxValue,
+                    };
+                    _marker.Shape = new GreenMarker(_marker, "w");
+                    sender.Markers.Add(_marker);
+                }
+
+                click_lat = (int)(home_lat_gps + latLong.Lat);
+                click_lon = (int)(home_lon_gps + latLong.Lng);
+
+                send_buffer[0] = (byte)'W';
+                send_buffer[1] = (byte)'P';
+
+                send_buffer[5] = (byte)(click_lat >> 24);
+                send_buffer[4] = (byte)(click_lat >> 16);
+                send_buffer[3] = (byte)(click_lat >> 8);
+                send_buffer[2] = (byte)(click_lat);
+
+                send_buffer[9] = (byte)(click_lon >> 24);
+                send_buffer[8] = (byte)(click_lon >> 16);
+                send_buffer[7] = (byte)(click_lon >> 8);
+                send_buffer[6] = (byte)(click_lon);
+
+                send_buffer[10] = (byte)'-';
+                check_byte = 0;
+                for (temp_byte = 0; temp_byte <= 10; temp_byte++) {
+                    check_byte ^= send_buffer[temp_byte];
+                }
+                send_buffer[11] = check_byte;
+
+                if (create_waypoint_list) {
+                    if (waypoint_list_counter < 8) waypoint_list_counter++;
+                    waypoint_click_lat[waypoint_list_counter] = click_lat;
+                    waypoint_click_lon[waypoint_list_counter] = click_lon;
+                }
+                else {
+                    if (_serialPort.IsOpen) {
+                        _serialPort.Write(send_buffer, 0, 13);
+                    }
+                    SendStatus = "Try 1";
+                    new_telemetry_data_to_send = 1;
+                    Send_telemetry_data.Enabled = true;
+                }
+            }
         }
 
         private void FlyListAction() {
@@ -40,9 +118,11 @@ namespace DroneMonitor.Visualization.ViewModels {
             fly_waypoint_list.Enabled = false;
             Send_telemetry_data.Enabled = false;
             SendStatus = "-";
+            ClearWayPointMarkers();
         }
 
         private void CreateListAction() {
+            ClearWayPointMarkers();
             create_waypoint_list = true;
             waypoint_list_counter = 0;
         }
@@ -66,6 +146,15 @@ namespace DroneMonitor.Visualization.ViewModels {
                 _serialPort.Dispose();
                 IsOpen = false;
                 StartStop = "Start";
+            }
+        }
+
+        private void ClearWayPointMarkers() {
+            if (_map != null) {
+                var wayPointMarkers = _map.Markers.Where(x => x.Shape is GreenMarker);
+                foreach (var marker in wayPointMarkers) {
+                    _map.Markers.Remove(marker);
+                }
             }
         }
 
@@ -129,19 +218,31 @@ namespace DroneMonitor.Visualization.ViewModels {
             }
         }
 
-        private void AlwaysRunning(object sender, EventArgs e) {//Should now run each time data is emitted
+        private void AlwaysRunning(object sender, EventArgs e) {
             CreateListCommand.RaiseCanExecuteChanged();
 
             if (start != 2)
                 WayPointVisibility = false;
 
-            if (IsOpen && first_receive == 0)
+            if (IsOpen && first_receive == 0) {
+                SignalMessage = "Waiting for signal";
                 SignalMessageVisibility = true;
-            else
+            }
+            else {
+                SignalMessage = "";
                 SignalMessageVisibility = false;
+            }
 
             milliseconds += 100;
             if (first_receive == 1) {
+                if (milliseconds - last_receive > 2000) {
+                    SignalMessage = "Connection Lost";
+                    SignalMessageVisibility = true;
+                }
+                if (milliseconds - last_receive < 1000) {
+                    SignalMessage = "";
+                    SignalMessageVisibility = false;
+                } 
 
                 if (flight_mode == 1) FlightMode = "1-Auto level";
                 if (flight_mode == 2) FlightMode = "2-Altutude hold";
@@ -197,10 +298,14 @@ namespace DroneMonitor.Visualization.ViewModels {
                 RollAngle = roll_angle.ToString();
                 Temperature = (temperature / 340.0 + 36.53).ToString("00.0") + "C";
 
-                if (battery_bar_level > 124)
-                    BatteryColor = 124;
-                if (battery_bar_level < 85)
-                    BatteryColor = 85;
+
+                if (battery_bar_level > 124) battery_bar_level = 124;
+                if (battery_bar_level < 85) battery_bar_level = 85;
+                if (battery_bar_level > 108) BatteryColor = Brushes.Lime;
+                else if (battery_bar_level > 100) BatteryColor = Brushes.Yellow;
+                else BatteryColor = Brushes.Red;
+
+                BatteryWidth =  134 - ((battery_bar_level - 80) * 3);
 
                 if (home_gps_set == 1)
                     LOSDistance = los_distance.ToString("0.") + "m";
@@ -218,58 +323,18 @@ namespace DroneMonitor.Visualization.ViewModels {
                 }
 
                 if (start == 2) {
-                    FlightTimerTick();
+                    if (_flight_timer.Enabled == false) _flight_timer.Enabled = true;
+                }
+                if (start == 0) {
+                    if (_flight_timer.Enabled == true) _flight_timer.Enabled = false;
                 }
             }
         }
 
-        private void FlightTimerTick() {
+        private void FlightTimerTick(object sender, EventArgs e) {
             flight_timer_seconds++;
             FlightTimer = $"Flight Time: {"00:" + (flight_timer_seconds / 60).ToString("00.") + ":" + (flight_timer_seconds % 60).ToString("00.")}";
         }
-        //If we want to maintain openstreet map
-        //private void Location_update_timer_Tick(object sender, EventArgs e) {
-        //    if (number_used_sats > 4 && l_lat_gps != 0) {
-        //        if (home_gps_set == 0) {
-        //            location_address = "https://www.openstreetmap.org/?mlat="
-        //            + ((float)(l_lat_gps) / 1000000.0).ToString(new CultureInfo("en-US"))
-        //            + "&mlon="
-        //            + ((float)l_lon_gps / 1000000.0).ToString(new CultureInfo("en-US"))
-        //            + "&zoom="
-        //            + zoom.ToString();
-
-        //        }
-        //        else {
-
-        //            location_address = "https://www.openstreetmap.org/?mlat="
-        //            + ((float)(l_lat_gps) / 1000000.0).ToString(new CultureInfo("en-US"))
-        //            + "&mlon="
-        //            + ((float)l_lon_gps / 1000000.0).ToString(new CultureInfo("en-US"))
-        //            + "#map="
-        //            + zoom.ToString()
-        //            + "/"
-        //            + ((float)(home_lat_gps) / 1000000.0).ToString(new CultureInfo("en-US"))
-        //            + "/"
-        //            + ((float)(home_lon_gps) / 1000000.0).ToString(new CultureInfo("en-US"));
-
-
-        //        }
-        //        if (webbrouwser_active == 1 && webbrouwser_2_ready == 1) {
-        //            webBrowser2.Visible = true;
-        //            webBrowser1.Visible = false;
-        //            webbrouwser_1_ready = 0;
-        //            webBrowser1.Navigate(location_address);
-        //            webbrouwser_active = 0;
-        //        }
-        //        else if (webbrouwser_active == 0 && webbrouwser_1_ready == 1) {
-        //            webBrowser1.Visible = true;
-        //            webBrowser2.Visible = false;
-        //            webbrouwser_2_ready = 0;
-        //            webBrowser2.Navigate(location_address);
-        //            webbrouwser_active = 1;
-        //        }
-        //    }
-        //}
 
         private void Fly_waypoint_list_Tick(object sender, EventArgs e) {// Continue running this once way point is clicked
             if (flight_mode != 3 && flight_mode != 9) {
@@ -321,7 +386,6 @@ namespace DroneMonitor.Visualization.ViewModels {
             }
         }
 
-        // Send out telemetry data
         private void Send_telemetry_data_Tick(object sender, EventArgs e) {
 
             if (flight_mode == 3 && new_telemetry_data_to_send > 0 && new_telemetry_data_to_send <= 10) {
@@ -343,6 +407,7 @@ namespace DroneMonitor.Visualization.ViewModels {
             }
         }
 
+        #region Properties
         private bool _isOpen = false;
         public bool IsOpen {
             get => _isOpen;
@@ -373,7 +438,7 @@ namespace DroneMonitor.Visualization.ViewModels {
             set => SetProperty(ref _satUsed, value);
         }
 
-        private Brush _satColor=Brushes.Red;
+        private Brush _satColor = Brushes.Red;
         public Brush SatColor {
             get => _satColor;
             set => SetProperty(ref _satColor, value);
@@ -451,6 +516,12 @@ namespace DroneMonitor.Visualization.ViewModels {
             set => SetProperty(ref _rollAngle, value);
         }
 
+        private double _batteryWidth;
+        public double BatteryWidth {
+            get => _batteryWidth;
+            set => SetProperty(ref _batteryWidth, value);
+        }
+
         private string _battery;
         public string Battery {
             get => _battery;
@@ -481,9 +552,16 @@ namespace DroneMonitor.Visualization.ViewModels {
             set => SetProperty(ref _signalMessageVisibility, value);
         }
 
-        public int BatteryColor {
-            get => battery_bar_level;
-            set => SetProperty(ref battery_bar_level, value);
+        private string _signalMessage;
+        public string SignalMessage {
+            get => _signalMessage;
+            set => SetProperty(ref _signalMessage, value);
+        }
+
+        private Brush _batteryColor;
+        public Brush BatteryColor {
+            get => _batteryColor;
+            set => SetProperty(ref _batteryColor, value);
         }
 
         private GMapProvider _selectedMap;
@@ -495,13 +573,15 @@ namespace DroneMonitor.Visualization.ViewModels {
         private PointLatLng _position;
         public PointLatLng Position {
             get {
-                if(Latitude is null || Longitude is null)
-                    return new PointLatLng(7.06130,4.82241);
+                if (Latitude is null || Longitude is null)
+                    return new PointLatLng(4.82241, 7.06130);
                 return new PointLatLng(double.Parse(Latitude), double.Parse(Longitude));
             }
 
             set => SetProperty(ref _position, value);
         }
+
+        #endregion
 
         public DelegateCommand OpenCloseCommand { get; }
         public DelegateCommand CreateListCommand { get; }
@@ -557,5 +637,8 @@ namespace DroneMonitor.Visualization.ViewModels {
         public int flight_timer_seconds;
         public bool create_waypoint_list;
         private Timer _alwaysRunningTimer;
+        private Timer _flight_timer;
+        private GMapMarker _marker;
+        private GMapControl _map;
     }
 }

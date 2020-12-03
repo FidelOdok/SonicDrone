@@ -6,6 +6,7 @@ using GMap.NET.MapProviders;
 using GMap.NET.WindowsPresentation;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace DroneMonitor.Visualization.Views {
     /// <summary>
@@ -26,6 +27,7 @@ namespace DroneMonitor.Visualization.Views {
             }
             GoogleMapProvider.Instance.ApiKey = Stuff.GoogleMapsApiKey;
             map.OnPositionChanged += PositionChanged;
+            map.MouseLeftButtonDown += Map_MouseLeftButtonDown;
 
             // set current marker
             _currentMarker = new GMapMarker(_viewModel.Position) {
@@ -34,6 +36,10 @@ namespace DroneMonitor.Visualization.Views {
             };
             _currentMarker.Shape = new RedMarker(_currentMarker, "current position");
             map.Markers.Add(_currentMarker);
+        }
+
+        private void Map_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
+            _viewModel.MapClicked((GMapControl)sender, e);
         }
 
         private void PositionChanged(PointLatLng point) {

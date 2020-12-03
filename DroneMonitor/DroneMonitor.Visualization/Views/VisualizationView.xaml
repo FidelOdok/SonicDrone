@@ -42,36 +42,20 @@
         </Grid.RowDefinitions>
         <StackPanel Orientation="Horizontal"
                     HorizontalAlignment="Center">
-            <TextBlock Text="W" Visibility="{Binding WayPointVisibility, Converter={StaticResource boolToVisibilityConverter}}"
-                       Style="{StaticResource WayPointStyle}"/>
-            <TextBlock Text="1" Visibility="{Binding WayPointVisibility, Converter={StaticResource boolToVisibilityConverter}}"
-                       Style="{StaticResource WayPointStyle}"/>
-            <TextBlock Text="2" Visibility="{Binding WayPointVisibility, Converter={StaticResource boolToVisibilityConverter}}"
-                       Style="{StaticResource WayPointStyle}"/>
-            <TextBlock Text="3" Visibility="{Binding WayPointVisibility, Converter={StaticResource boolToVisibilityConverter}}"
-                       Style="{StaticResource WayPointStyle}"/>
-            <TextBlock Text="4" Visibility="{Binding WayPointVisibility, Converter={StaticResource boolToVisibilityConverter}}"
-                       Style="{StaticResource WayPointStyle}"/>
-            <TextBlock Text="5" Visibility="{Binding WayPointVisibility, Converter={StaticResource boolToVisibilityConverter}}"
-                       Style="{StaticResource WayPointStyle}"/>
-            <TextBlock Text="6" Visibility="{Binding WayPointVisibility, Converter={StaticResource boolToVisibilityConverter}}"
-                       Style="{StaticResource WayPointStyle}"/>
-            <TextBlock Text="7" Visibility="{Binding WayPointVisibility, Converter={StaticResource boolToVisibilityConverter}}"
-                       Style="{StaticResource WayPointStyle}"/>
-
             <TextBlock Text="Flight Mode: " FontSize="16" Margin="20,0,0,0"/>
             <TextBlock Text="{Binding FlightMode}" FontSize="16"/>
             <TextBlock Text="Error: " FontSize="16" Margin="20,0,0,0"/>
             <TextBlock Text="{Binding Error}" FontSize="16"/>
             
-            <Rectangle Width="155" Fill="{Binding BatteryColor,Converter={StaticResource intToBrushConverter}}" 
+            <Rectangle Width="{Binding BatteryWidth}" Fill="{Binding BatteryColor}" 
                        Height="16" Margin="20,0,0,0"/>
 
-            <TextBlock Text="Waiting for telemetry signal" 
+            <TextBlock Text="{Binding SignalMessage}" 
                        FontSize="16" Margin="50,0,0,0"
                        Foreground="Red"
                        Visibility="{Binding SignalMessageVisibility,
                             Converter={StaticResource boolToVisibilityConverter}}"/>
+            
             <TextBlock Text="{Binding FlightTimer}" FontSize="16"
                        Margin="50,0,0,0"/>
         </StackPanel>

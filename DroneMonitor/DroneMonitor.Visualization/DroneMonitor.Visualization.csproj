@@ -99,6 +99,9 @@
   <ItemGroup>
     <Compile Include="Converters\BoolToBrushConverter.cs" />
     <Compile Include="Converters\IntToBrushConverter.cs" />
+    <Compile Include="Markers\GreenMarker.xaml.cs">
+      <DependentUpon>GreenMarker.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Markers\RedMarker.xaml.cs">
       <DependentUpon>RedMarker.xaml</DependentUpon>
     </Compile>
@@ -148,6 +151,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Page Include="Markers\GreenMarker.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Markers\RedMarker.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -165,7 +172,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
     <Resource Include="images\power-button.png" />
   </ItemGroup>
@@ -174,6 +180,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="images\red-dot.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="images\green-marker.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
