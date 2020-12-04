@@ -12,9 +12,7 @@
                 Background="Transparent">
             <Grid>
                 <Image Source="/DroneMonitor.Visualization;component/images/power-button.png"
-                       Margin="0,0,0,17"/>
-                <TextBlock Text="Start" VerticalAlignment="Bottom"
-                           HorizontalAlignment="Center"/>
+                       />
             </Grid>
         </Button>
     </StackPanel>

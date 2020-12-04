@@ -20,14 +20,12 @@
             <Ribbon.ApplicationMenu>
                 <RibbonApplicationMenu Visibility="Hidden"/>
             </Ribbon.ApplicationMenu>
-            
+
             <RibbonTab Header="Visualization" Background="#FFC57777">
                 <RibbonGroup Header="Control">
                     <ContentControl prism:RegionManager.RegionName="ControlRegion"/>
                 </RibbonGroup>
-            </RibbonTab>
-            <RibbonTab Header="Flight Vision" Background="#FFC57777">
-                <RibbonGroup Header="Design Parameters">
+                <RibbonGroup Header="Vision">
                     <ContentControl prism:RegionManager.RegionName="VisionRegion"/>
                 </RibbonGroup>
             </RibbonTab>
