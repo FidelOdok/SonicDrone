@@ -28,14 +28,7 @@ namespace DroneMonitor.Visualization.Views {
             GoogleMapProvider.Instance.ApiKey = Stuff.GoogleMapsApiKey;
             map.OnPositionChanged += PositionChanged;
             map.MouseLeftButtonDown += Map_MouseLeftButtonDown;
-
-            // set current marker
-            _currentMarker = new GMapMarker(_viewModel.Position) {
-                Offset = new Point(-15, -15),
-                ZIndex = int.MaxValue,
-            };
-            _currentMarker.Shape = new RedMarker(_currentMarker, "current position");
-            map.Markers.Add(_currentMarker);
+            _viewModel.Map = map;
         }
 
         private void Map_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) {

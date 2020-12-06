@@ -41,7 +41,7 @@ namespace DroneMonitor.Visualization.ViewModels {
         }
 
         public void MapClicked(GMapControl sender, MouseButtonEventArgs e) {
-            _map = sender;
+            Map = sender;
             var point = e.GetPosition(sender);
             if (_serialPort.IsOpen && first_receive == 1 && start == 2 && flight_mode == 3 && fly_waypoint_list.Enabled == false) {
                 var latLong = sender.FromLocalToLatLng((int)point.X, (int)point.Y);
@@ -143,17 +143,20 @@ namespace DroneMonitor.Visualization.ViewModels {
             }
             else {
                 _serialPort.Close();
-                _serialPort.Dispose();
+                CanShowHomeMarker = false;
+                first_receive = 0;
+                CreateListCommand.RaiseCanExecuteChanged();
                 IsOpen = false;
                 StartStop = "Start";
+                _flight_timer.Enabled = false;
             }
         }
 
         private void ClearWayPointMarkers() {
-            if (_map != null) {
-                var wayPointMarkers = _map.Markers.Where(x => x.Shape is GreenMarker);
+            if (Map != null) {
+                var wayPointMarkers = Map.Markers.Where(x => x.Shape is GreenMarker);
                 foreach (var marker in wayPointMarkers) {
-                    _map.Markers.Remove(marker);
+                    Map.Markers.Remove(marker);
                 }
             }
         }
@@ -316,10 +319,12 @@ namespace DroneMonitor.Visualization.ViewModels {
                     home_gps_set = 1;
                     home_lat_gps = l_lat_gps;
                     home_lon_gps = l_lon_gps;
+                    CanShowHomeMarker = true;
                 }
 
                 if (home_gps_set == 1 && start == 0) {
                     home_gps_set = 0;
+                    CanShowHomeMarker = false;
                 }
 
                 if (start == 2) {
@@ -404,6 +409,25 @@ namespace DroneMonitor.Visualization.ViewModels {
                     SendStatus = "Received";
                     if (waypoint_send_step == 2) waypoint_send_step = 3;
                 }
+            }
+        }
+
+        private void ShowHomeMarker() {
+            if (CanShowHomeMarker) {
+                if (_homeMarker != null)
+                    Map.Markers.Remove(_marker);
+
+                _homeMarker = new GMapMarker(HomePosition) {
+                    Offset = new Point(-15, -15),
+                    ZIndex = int.MaxValue,
+                };
+                _homeMarker.Shape = new GreenMarker(_marker, "H");
+                Map.Markers.Add(_homeMarker);
+            }
+            else {
+
+                if (_homeMarker != null)
+                    Map.Markers.Remove(_marker);
             }
         }
 
@@ -575,13 +599,43 @@ namespace DroneMonitor.Visualization.ViewModels {
             get {
                 if (Latitude is null || Longitude is null)
                     return new PointLatLng(4.82241, 7.06130);
-                return new PointLatLng(double.Parse(Latitude), double.Parse(Longitude));
+                if (_currentMarker != null)
+                    Map.Markers.Remove(_currentMarker);
+
+                var position = new PointLatLng(double.Parse(Latitude), double.Parse(Longitude));
+                _currentMarker = new GMapMarker(position) {
+                    Offset = new Point(-15, -15),
+                    ZIndex = int.MaxValue,
+                };
+                _currentMarker.Shape = new RedMarker(_currentMarker, $"Lat={Latitude},Long={Longitude}");
+                Map.Markers.Add(_currentMarker);
+                return position;
+                
             }
 
             set => SetProperty(ref _position, value);
         }
 
+        private PointLatLng _homePosition;
+        public PointLatLng HomePosition {
+            get {
+                return new PointLatLng(home_lat_gps, home_lon_gps);
+            }
+            set => SetProperty(ref _homePosition, value);
+        }
+
+        private bool _canShowHomeMarker;
+        public bool CanShowHomeMarker {
+            get => _canShowHomeMarker;
+            set {
+                _canShowHomeMarker = true;
+                RaisePropertyChanged();
+                ShowHomeMarker();
+            }
+        }
+
         #endregion
+
 
         public DelegateCommand OpenCloseCommand { get; }
         public DelegateCommand CreateListCommand { get; }
@@ -589,7 +643,7 @@ namespace DroneMonitor.Visualization.ViewModels {
         public DelegateCommand ResetCommand { get; }
         public string[] Ports { get; set; }
         public List<GMapProvider> Maps { get; }
-
+        public GMapControl Map { get; set; }
 
         private SerialPort _serialPort;
         private byte check_byte;
@@ -639,6 +693,7 @@ namespace DroneMonitor.Visualization.ViewModels {
         private Timer _alwaysRunningTimer;
         private Timer _flight_timer;
         private GMapMarker _marker;
-        private GMapControl _map;
+        private GMapMarker _currentMarker;
+        private GMapMarker _homeMarker;
     }
 }

@@ -71,7 +71,7 @@
             <StackPanel Grid.Column="1" Margin="5,0,0,0">
                 <TextBlock Text="Zoom"/>
                 <Slider Minimum="1" Maximum="23" 
-                        Name="zoomSlider" Value="13"/>
+                        Name="zoomSlider" Value="18"/>
 
                 <TextBlock Text="Maps"/>
                 <ComboBox ItemsSource="{Binding Maps}" 
