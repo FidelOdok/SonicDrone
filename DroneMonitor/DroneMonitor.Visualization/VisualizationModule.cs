@@ -7,7 +7,7 @@ using Prism.Regions;
 namespace DroneMonitor.Visualization {
     public class VisualizationModule : IModule {
         public void Initialize() {
-            _regionManager.RegisterViewWithRegion(RegionNames.PictureRegion, typeof(PictureView));
+           // _regionManager.RegisterViewWithRegion(RegionNames.PictureRegion, typeof(PictureView));
             _regionManager.RegisterViewWithRegion(RegionNames.ControlRegion, typeof(ControlView));
         }
 

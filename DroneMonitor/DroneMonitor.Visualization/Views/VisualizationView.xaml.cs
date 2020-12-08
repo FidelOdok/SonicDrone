@@ -8,19 +8,22 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
-namespace DroneMonitor.Visualization.Views {
+namespace DroneMonitor.Visualization.Views
+{
     /// <summary>
     /// Interaction logic for VisualizationView.xaml
     /// </summary>
-    public partial class VisualizationView : UserControl {
-        private GMapMarker _currentMarker;
+    public partial class VisualizationView : UserControl
+    {
         private VisualizationViewModel _viewModel;
-        public VisualizationView() {
+        public VisualizationView()
+        {
             InitializeComponent();
             DataContext = _viewModel = new VisualizationViewModel();
 
-            if (!Stuff.PingNetwork("google.com")) {
-                MessageBox.Show("No internet connection available.", 
+            if (!Stuff.PingNetwork("google.com"))
+            {
+                MessageBox.Show("No internet connection available.",
                     "Drone Monitor",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
@@ -28,15 +31,19 @@ namespace DroneMonitor.Visualization.Views {
             GoogleMapProvider.Instance.ApiKey = Stuff.GoogleMapsApiKey;
             map.OnPositionChanged += PositionChanged;
             map.MouseLeftButtonDown += Map_MouseLeftButtonDown;
+            map.MouseWheelZoomEnabled = false;
             _viewModel.Map = map;
         }
 
-        private void Map_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
+        private void Map_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
             _viewModel.MapClicked((GMapControl)sender, e);
         }
 
-        private void PositionChanged(PointLatLng point) {
-            _currentMarker.Position = point;
+        private void PositionChanged(PointLatLng point)
+        {
+            if (_viewModel.CurrentMarker != null)
+                _viewModel.CurrentMarker.Position = point;
         }
     }
 }

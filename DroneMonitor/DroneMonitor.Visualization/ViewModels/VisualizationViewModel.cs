@@ -19,6 +19,7 @@ namespace DroneMonitor.Visualization.ViewModels {
         public VisualizationViewModel() {
             Ports = SerialPort.GetPortNames();
             _serialPort = new SerialPort();
+            _serialPort.PortName = "default";
             Maps = GMapProviders.List;
             SelectedMap = GMapProviders.GoogleMap;
             OpenCloseCommand = new DelegateCommand(OpenCloseAction);
@@ -129,6 +130,12 @@ namespace DroneMonitor.Visualization.ViewModels {
 
         private void OpenCloseAction() {
             if (!IsOpen) {
+                _dataProgress = new Progress<bool>(val =>
+                {
+                    if (val)
+                        AlwaysRunning();
+                });
+
                 if (!string.IsNullOrWhiteSpace(SelectedPort)) {
                     _serialPort = new SerialPort(SelectedPort, 9600, Parity.None, 8, StopBits.One);
                     _serialPort.DataReceived += new SerialDataReceivedEventHandler(DataReceivedHandler);
@@ -218,7 +225,144 @@ namespace DroneMonitor.Visualization.ViewModels {
                 ground_distance += Math.Pow((float)(l_lon_gps - home_lon_gps) * (Math.Cos((l_lat_gps / 1000000) * 0.017453) * 0.111), 2);
                 ground_distance = Math.Sqrt(ground_distance);
                 los_distance = Math.Sqrt(Math.Pow(ground_distance, 2) + Math.Pow(altitude_meters, 2));
+                _dataProgress.Report(true);
             }
+        }
+
+        private void AlwaysRunning()
+        {
+            CreateListCommand.RaiseCanExecuteChanged();
+
+            if (start != 2)
+                WayPointVisibility = false;
+
+            if (IsOpen && first_receive == 0)
+            {
+                SignalMessage = "Waiting for signal";
+                SignalMessageVisibility = true;
+            }
+            else
+            {
+                SignalMessage = "";
+                SignalMessageVisibility = false;
+            }
+
+            milliseconds += 100;
+            if (first_receive == 1)
+            {
+                if (milliseconds - last_receive > 2000)
+                {
+                    SignalMessage = "Connection Lost";
+                    SignalMessageVisibility = true;
+                }
+                if (milliseconds - last_receive < 1000)
+                {
+                    SignalMessage = "";
+                    SignalMessageVisibility = false;
+                }
+
+                if (flight_mode == 1) FlightMode = "1-Auto level";
+                if (flight_mode == 2) FlightMode = "2-Altutude hold";
+                if (flight_mode == 3) FlightMode = "3-GPS hold";
+                if (flight_mode == 4) FlightMode = "4-RTH active";
+                if (flight_mode == 5) FlightMode = "5-RTH Increase altitude";
+                if (flight_mode == 6) FlightMode = "6-RTH Returning to home position";
+                if (flight_mode == 7) FlightMode = "7-RTH Landing";
+                if (flight_mode == 8) FlightMode = "8-RTH finished";
+                if (flight_mode == 9) FlightMode = "9-Fly to waypoint";
+
+                if (start == 0)
+                {
+                    BladeColor = Brushes.Blue;
+                }
+                if (start == 1)
+                {
+                    BladeColor = Brushes.Yellow;
+                }
+                if (start == 2)
+                {
+                    BladeColor = Brushes.Red;
+                }
+
+
+                if (error == 0) Error = "No error";
+                if (error == 1) Error = "Battery LOW";
+                if (error == 2) Error = "Program loop time";
+                if (error == 3) Error = "ACC cal error";
+                if (error == 4) Error = "GPS watchdog time";
+                if (error == 5) Error = "Manual take-off thr error";
+                if (error == 6) Error = "No take-off detected";
+                if (error == 7) Error = "Auto throttle error";
+
+                SatUsed = number_used_sats.ToString();
+                if (number_used_sats > 6)
+                {
+                    SatColor = Brushes.Green;
+
+                }
+                else if (number_used_sats > 3)
+                {
+                    SatColor = Brushes.Yellow;
+
+                }
+                else
+                {
+                    SatColor = Brushes.Red;
+
+                }
+
+                Latitude = ((float)l_lat_gps / 1000000.0).ToString(new CultureInfo("en-US"));
+                Longitude = ((float)l_lon_gps / 1000000.0).ToString(new CultureInfo("en-US"));
+                Heading = actual_compass_heading.ToString();
+                Altitude = altitude_meters.ToString() + "m";
+                MaxAltitude = max_altitude_meters.ToString() + "m";
+                Battery = battery_voltage.ToString("00.0") + "V";
+                PitchAngle = pitch_angle.ToString();
+                RollAngle = roll_angle.ToString();
+                Temperature = (temperature / 340.0 + 36.53).ToString("00.0") + "C";
+
+
+                if (battery_voltage > 12) 
+                    BatteryColor = Brushes.Lime;
+                else if (battery_voltage > 11) 
+                    BatteryColor = Brushes.Yellow;
+                else 
+                    BatteryColor = Brushes.Red;
+
+                BatteryWidth =  (battery_voltage -10) * BorderWidth / (12.6 - 10);
+
+                if (home_gps_set == 1)
+                    LOSDistance = los_distance.ToString("0.") + "m";
+                else
+                    LOSDistance = "0m";
+
+                if (home_gps_set == 0 && number_used_sats > 4 && start == 2)
+                {
+                    home_gps_set = 1;
+                    home_lat_gps = l_lat_gps;
+                    home_lon_gps = l_lon_gps;
+                    CanShowHomeMarker = true;
+                }
+
+                if (home_gps_set == 1 && start == 0)
+                {
+                    home_gps_set = 0;
+                    CanShowHomeMarker = false;
+                }
+
+                if (start == 2)
+                {
+                    if (_flight_timer.Enabled == false) _flight_timer.Enabled = true;
+                }
+                if (start == 0)
+                {
+                    if (_flight_timer.Enabled == true) _flight_timer.Enabled = false;
+                }
+            }
+
+            _serialPort.Close();
+            if (_serialPort.PortName != "default")
+                _serialPort.Open();
         }
 
         private void AlwaysRunning(object sender, EventArgs e) {
@@ -246,93 +390,6 @@ namespace DroneMonitor.Visualization.ViewModels {
                     SignalMessage = "";
                     SignalMessageVisibility = false;
                 } 
-
-                if (flight_mode == 1) FlightMode = "1-Auto level";
-                if (flight_mode == 2) FlightMode = "2-Altutude hold";
-                if (flight_mode == 3) FlightMode = "3-GPS hold";
-                if (flight_mode == 4) FlightMode = "4-RTH active";
-                if (flight_mode == 5) FlightMode = "5-RTH Increase altitude";
-                if (flight_mode == 6) FlightMode = "6-RTH Returning to home position";
-                if (flight_mode == 7) FlightMode = "7-RTH Landing";
-                if (flight_mode == 8) FlightMode = "8-RTH finished";
-                if (flight_mode == 9) FlightMode = "9-Fly to waypoint";
-
-                if (start == 0) {
-                    BladeColor = Brushes.Blue;
-                }
-                if (start == 1) {
-                    BladeColor = Brushes.Yellow;
-                }
-                if (start == 2) {
-                    BladeColor = Brushes.Red;
-                }
-
-
-                if (error == 0) Error = "No error";
-                if (error == 1) Error = "Battery LOW";
-                if (error == 2) Error = "Program loop time";
-                if (error == 3) Error = "ACC cal error";
-                if (error == 4) Error = "GPS watchdog time";
-                if (error == 5) Error = "Manual take-off thr error";
-                if (error == 6) Error = "No take-off detected";
-                if (error == 7) Error = "Auto throttle error";
-
-                SatUsed = number_used_sats.ToString();
-                if (number_used_sats > 6) {
-                    SatColor = Brushes.Green;
-
-                }
-                else if (number_used_sats > 3) {
-                    SatColor = Brushes.Yellow;
-
-                }
-                else {
-                    SatColor = Brushes.Red;
-
-                }
-
-                Latitude = ((float)l_lat_gps / 1000000.0).ToString(new CultureInfo("en-US"));
-                Longitude = ((float)l_lon_gps / 1000000.0).ToString(new CultureInfo("en-US"));
-                Heading = actual_compass_heading.ToString();
-                Altitude = altitude_meters.ToString() + "m";
-                MaxAltitude = max_altitude_meters.ToString() + "m";
-                Battery = battery_voltage.ToString("00.0") + "V";
-                PitchAngle = pitch_angle.ToString();
-                RollAngle = roll_angle.ToString();
-                Temperature = (temperature / 340.0 + 36.53).ToString("00.0") + "C";
-
-
-                if (battery_bar_level > 124) battery_bar_level = 124;
-                if (battery_bar_level < 85) battery_bar_level = 85;
-                if (battery_bar_level > 108) BatteryColor = Brushes.Lime;
-                else if (battery_bar_level > 100) BatteryColor = Brushes.Yellow;
-                else BatteryColor = Brushes.Red;
-
-                BatteryWidth =  134 - ((battery_bar_level - 80) * 3);
-
-                if (home_gps_set == 1)
-                    LOSDistance = los_distance.ToString("0.") + "m";
-                else
-                    LOSDistance = "0m";
-
-                if (home_gps_set == 0 && number_used_sats > 4 && start == 2) {
-                    home_gps_set = 1;
-                    home_lat_gps = l_lat_gps;
-                    home_lon_gps = l_lon_gps;
-                    CanShowHomeMarker = true;
-                }
-
-                if (home_gps_set == 1 && start == 0) {
-                    home_gps_set = 0;
-                    CanShowHomeMarker = false;
-                }
-
-                if (start == 2) {
-                    if (_flight_timer.Enabled == false) _flight_timer.Enabled = true;
-                }
-                if (start == 0) {
-                    if (_flight_timer.Enabled == true) _flight_timer.Enabled = false;
-                }
             }
         }
 
@@ -432,6 +489,14 @@ namespace DroneMonitor.Visualization.ViewModels {
         }
 
         #region Properties
+
+        private double _borderWidth=100;
+        public double BorderWidth
+        {
+            get => _borderWidth;
+            set => SetProperty(ref _borderWidth, value);
+        }
+
         private bool _isOpen = false;
         public bool IsOpen {
             get => _isOpen;
@@ -599,16 +664,16 @@ namespace DroneMonitor.Visualization.ViewModels {
             get {
                 if (Latitude is null || Longitude is null)
                     return new PointLatLng(4.82241, 7.06130);
-                if (_currentMarker != null)
-                    Map.Markers.Remove(_currentMarker);
+                if (CurrentMarker != null)
+                    Map.Markers.Remove(CurrentMarker);
 
                 var position = new PointLatLng(double.Parse(Latitude), double.Parse(Longitude));
-                _currentMarker = new GMapMarker(position) {
+                CurrentMarker = new GMapMarker(position) {
                     Offset = new Point(-15, -15),
                     ZIndex = int.MaxValue,
                 };
-                _currentMarker.Shape = new RedMarker(_currentMarker, $"Lat={Latitude},Long={Longitude}");
-                Map.Markers.Add(_currentMarker);
+                CurrentMarker.Shape = new RedMarker(CurrentMarker, $"Lat={Latitude},Long={Longitude}");
+                Map.Markers.Add(CurrentMarker);
                 return position;
                 
             }
@@ -644,6 +709,7 @@ namespace DroneMonitor.Visualization.ViewModels {
         public string[] Ports { get; set; }
         public List<GMapProvider> Maps { get; }
         public GMapControl Map { get; set; }
+        public GMapMarker CurrentMarker { get; set; }
 
         private SerialPort _serialPort;
         private byte check_byte;
@@ -693,7 +759,7 @@ namespace DroneMonitor.Visualization.ViewModels {
         private Timer _alwaysRunningTimer;
         private Timer _flight_timer;
         private GMapMarker _marker;
-        private GMapMarker _currentMarker;
         private GMapMarker _homeMarker;
+        private IProgress<bool> _dataProgress;
     }
 }

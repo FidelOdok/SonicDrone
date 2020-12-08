@@ -55,7 +55,7 @@ float declination = 0.0;                   //Set the declination between the mag
 int16_t manual_takeoff_throttle = 1500;    //Enter the manual hover point when auto take-off detection is not desired (between 1400 and 1600).
 int16_t motor_idle_speed = 1100;           //Enter the minimum throttle pulse of the motors when they idle (between 1000 and 1200). 1170 for DJI
 
-uint8_t gyro_address = 0x69;               //The I2C address of the MPU-6050 is 0x69 in hexadecimal form.
+uint8_t gyro_address = 0x68;               //The I2C address of the MPU-6050 is 0x68 in hexadecimal form.
 uint8_t MS5611_address = 0x77;             //The I2C address of the MS5611 barometer is 0x77 in hexadecimal form.
 uint8_t compass_address = 0x1E;            //The I2C address of the HMC5883L is 0x1E in hexadecimal form.
 
@@ -221,8 +221,8 @@ void setup() {
   EEPROM.PageBase1 = 0x801F800;
   EEPROM.PageSize  = 0x400;
 
-  Serial.begin(57600);                                        //Set the serial output to 57600 kbps. (for debugging only)
-  delay(250);                                                 //Give the serial port some time to start to prevent data loss.
+  //Serial.begin(57600);                                        //Set the serial output to 57600 kbps. (for debugging only)
+  //delay(250);                                                 //Give the serial port some time to start to prevent data loss.
 
   timer_setup();                                                //Setup the timers for the receiver inputs and ESC's output.
   delay(50);                                                    //Give the timers some time to start.
